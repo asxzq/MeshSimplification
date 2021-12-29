@@ -2,11 +2,16 @@
 #include<iostream>
 #include"vertex.h"
 #include<fstream>
+#include<string>
 #define MAX_CNT 100000
 
 class MeshSimplification {
 	//点集
-	Vertex buffer[MAX_CNT];
+	Vertex vertexBuffer[MAX_CNT];
+	//顶点数
+	int cntVertex;
+	//边数
+	int cntEdge;
 	//现有面数
 	int cntFace_N;
 	//目标面数
@@ -16,6 +21,6 @@ public:
 	MeshSimplification(void);
 	~MeshSimplification(void);
 
-	void readfile(const char s[100]);
+	void fileRead(std::string pathNameOBJ);
 
 };
