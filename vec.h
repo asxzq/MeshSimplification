@@ -22,4 +22,19 @@ public:
 	double calNorm();
 	//计算向量的单位向量
 	Vec3d calUnite();
+	//计算叉乘
+	Vec3d calCross(const Vec3d&);
+	//计算点乘
+	double calDot(const Vec3d&);
+};
+
+
+
+class Vec4d {
+public:
+	double value[4];
+
+	Vec4d(void);
+	Vec4d(double _x, double _y, double _z, double _t);
+	~Vec4d(void);
 };

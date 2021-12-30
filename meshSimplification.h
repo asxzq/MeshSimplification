@@ -2,6 +2,7 @@
 #include<iostream>
 #include"vertex.h"
 #include"edge.h"
+#include"mat.h"
 #include<fstream>
 #include<string>
 #include<queue>
@@ -41,7 +42,7 @@ class MeshSimplification {
 	//标记是否已被删除
 	bool edgeDeleted[MAX_EDGE_CNT + 1];
 	//边的索引图表----便于访问边的索引
-	map<pair<int, int>, int> edge2id;
+	std::map<std::pair<int, int>, int> edge2id;
 
 
 public:
@@ -53,12 +54,17 @@ public:
 	void fileRead(std::string pathNameOBJ);
 
 
-
+	//顶点相关函数
+	//计算代价矩阵
+	Mat calVertexQ(int idVertex);
 
 
 	//边相关函数
 	//增加边
 	void addEdge(Edge&);
-	
+	//计算缩边的顶点和代价
+	void calValueNVpos(Edge&);
+	//计算缩边的顶点
+	Vec3d calVpos(Edge&, Mat A, int flag);
 
 };

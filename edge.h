@@ -4,15 +4,17 @@
 #include<stdio.h>
 #include"vec.h"
 
+#define MAX_VALUE 99999;
+
 class Edge {
 public:
 	//边的序号
 	int id;
 	//边的顶点序号
 	int v1, v2;
-	//缩编后顶点
+	//缩边后顶点
 	Vec3d vPos;
-	//代价
+	//缩边代价
 	double deltaValue;
 
 	Edge(void);
