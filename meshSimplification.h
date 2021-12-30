@@ -7,8 +7,8 @@
 #include<string>
 #include<queue>
 #include<map>
-#define MAX_VERTEX_CNT 100000
-#define MAX_EDGE_CNT 200000
+#define MAX_VERTEX_CNT 1000000
+#define MAX_EDGE_CNT 2000000
 
 class MeshSimplification {
 	
@@ -52,6 +52,8 @@ public:
 	//流程主体函数
 	//读取OBJ文件
 	void fileRead(std::string pathNameOBJ);
+	void edgeCollapse(int faceTarget);
+	void fileWrite(std::string pathNameOBJ);
 
 
 	//顶点相关函数
@@ -62,9 +64,14 @@ public:
 	//边相关函数
 	//增加边
 	void addEdge(Edge&);
+	//删除边
+	void deleteEdge(Edge&);
+	void deleteEdge(int id1, int id2);
 	//计算缩边的顶点和代价
 	void calValueNVpos(Edge&);
 	//计算缩边的顶点
 	Vec3d calVpos(Edge&, Mat A, int flag);
+	//取出deltaValue最小的点
+	Edge getEdgeWithMINDeltaValue();
 
 };

@@ -1,7 +1,4 @@
 #include"vec.h"
-#define EPS 1e-7
-
-
 
 Vec3d::Vec3d(void)
 {

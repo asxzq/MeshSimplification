@@ -9,6 +9,16 @@ Edge::Edge(void) {
 	deltaValue = MAX_VALUE;
 }
 
+
+Edge::Edge(int _v1, int _v2) {
+
+	v1 = _v1;
+	v2 = _v2;
+	id = 0;
+	//vPos = Vec3d(0, 0, 0);
+	deltaValue = MAX_VALUE;
+}
+
 Edge::~Edge(void) {
 
 }

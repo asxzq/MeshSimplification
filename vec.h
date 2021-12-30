@@ -1,6 +1,7 @@
 #pragma once
 #include<iostream>
 #include<cmath>
+#define EPS 1e-7
 
 class Vec3d {
 public:
