@@ -9,6 +9,8 @@ MeshSimplification::MeshSimplification(void){
 		edgeDeleted[i] = false;
 	for (int i = 0; i < MAX_VERTEX_CNT; i++)
 		vertexDeleted[i] = false;
+	for (int i = 0; i < MAX_VERTEX_CNT; i++)
+		vertexTimes[i] = 0;
 }
 
 MeshSimplification::~MeshSimplification(void) {
@@ -45,12 +47,19 @@ void MeshSimplification::fileRead(std::string pathNameOBJ) {
 			cntFace_N++;
 			int v1, v2, v3;
 			infileOBJ >> v1 >> v2 >> v3;
+			if(v1==13||v2==13||v3==13)
+				std::cout << v1 << " " << v2 << " " << v3 << std::endl;
+			vertexTimes[v1] ++;
+			vertexTimes[v2] ++;
+			vertexTimes[v3] ++;
+			
 			vertexBuffer[v1].neighbor.insert(v2);
 			vertexBuffer[v1].neighbor.insert(v3);
 			vertexBuffer[v2].neighbor.insert(v3);
 			vertexBuffer[v2].neighbor.insert(v1);
 			vertexBuffer[v3].neighbor.insert(v1);
 			vertexBuffer[v3].neighbor.insert(v2);
+
 		}
 	}
 	std::cout << "face read finished! cntFace:" << cntFace_N  << std::endl;
@@ -67,8 +76,20 @@ void MeshSimplification::fileRead(std::string pathNameOBJ) {
 		}
 	}
 
-	std::cout << "edge init finished! cntEdge:" << cntEdge << edges.size() << std::endl;
+	std::cout << "edge init finished! cntEdge:" << cntEdge << std::endl;
 
+	for (int i = 1; i < cntVertex; i++) {
+		if(vertexTimes[i]!=vertexBuffer[i].neighbor.size())
+			std::cout << i << " " << vertexTimes[i] << std::endl;
+
+		if (i == 13) {
+			std::cout << i << " " << vertexTimes[i] << " neighbor: " << std::endl;
+			for (std::set<int>::iterator it1 = vertexBuffer[i].neighbor.begin(); it1 != vertexBuffer[i].neighbor.end(); it1++) {
+				std::cout << (*it1) << ":" << vertexTimes[(*it1)] << " ";
+			}
+			std::cout << std::endl;
+		}
+	}
 	
 	//关闭文件
 	infileOBJ.close();
@@ -80,10 +101,12 @@ void MeshSimplification::edgeCollapse(int faceTarget) {
 	if(cntFace_T > faceTarget)
 		cntFace_T = faceTarget;
 	for (; cntFace_N > cntFace_T; cntFace_N -= 2) {
-		if(cntFace_N % 1000 == 0)
+		
+		if(cntFace_N % 1000 == 0 || cntFace_N % 1000 == 1)
 			std::cout << cntFace_N << std::endl;
 		//取出点
 		Edge edgeMIN = getEdgeWithMINDeltaValue();
+		//std::cout << cntFace_N << " " << edgeMIN.id << std::endl;
 		//Edge edgeMIN(1923,3641);
 		//calValueNVpos(edgeMIN);
 
@@ -171,10 +194,6 @@ Edge MeshSimplification::getEdgeWithMINDeltaValue() {
 	edges.pop();
 	return e;
 }
-
-
-
-
 
 
 
@@ -308,16 +327,33 @@ void MeshSimplification::fileWrite(std::string pathNameOBJ) {
 			continue;
 		Vertex* v = &(vertexBuffer[i]);//对于第i个点
 		for (std::set<int>::iterator it1 = v->neighbor.begin(); it1 != v->neighbor.end(); it1++) {
-			if (i >= (*it1))
+			if (v->id >= (*it1))
 				continue;
 			for (std::set<int>::iterator it2 = v->neighbor.begin(); it2 != v->neighbor.end(); it2++) {
 				if ((*it1) < (*it2) && vertexBuffer[(*it1)].neighbor.count(*it2)) {
 					cntFaceTrue++;
+					vertexTimes[v->id] --;
+					vertexTimes[vertexBuffer[(*it1)].id] --;
+					vertexTimes[vertexBuffer[(*it2)].id] --;
+					if(v->id == 13)
+						std::cout << v->id << " " << vertexBuffer[(*it1)].id << " " << vertexBuffer[(*it2)].id << std::endl;
 					outfileOBJ << "f " << v->id << " " << vertexBuffer[(*it1)].id << " " << vertexBuffer[(*it2)].id << std::endl;
 				}
 			}
 		}
 	}
+
+	for (int i = 1; i < cntVertex; i++) {
+		if (vertexTimes[i] != 0) {
+			std::cout << i << "neighbor: " << std::endl;
+			for (std::set<int>::iterator it1 = vertexBuffer[i].neighbor.begin(); it1 != vertexBuffer[i].neighbor.end(); it1++) {
+				std::cout << (*it1) << ":" <<vertexTimes[(*it1)] << " ";
+			}
+			std::cout << std::endl;
+		}
+	}
+
+
 	std::cout << "face: " << cntFaceTrue << std::endl;
 }
 

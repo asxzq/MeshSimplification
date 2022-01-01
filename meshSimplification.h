@@ -7,8 +7,8 @@
 #include<string>
 #include<queue>
 #include<map>
-#define MAX_VERTEX_CNT 1000000
-#define MAX_EDGE_CNT 2000000
+#define MAX_VERTEX_CNT 10000000
+#define MAX_EDGE_CNT 20000000
 
 class MeshSimplification {
 	
@@ -23,9 +23,11 @@ class MeshSimplification {
 	//顶点数
 	int cntVertex;
 	//点集
-	Vertex vertexBuffer[MAX_VERTEX_CNT];
+	Vertex vertexBuffer[MAX_VERTEX_CNT + 1];
 	//标记是否已被删除
 	bool vertexDeleted[MAX_VERTEX_CNT + 1];
+
+	int vertexTimes[MAX_VERTEX_CNT + 1];
 
 
 	//边相关变量
