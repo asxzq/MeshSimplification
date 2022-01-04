@@ -1,6 +1,7 @@
 #include"meshSimplification.h"
 
 MeshSimplification::MeshSimplification(void){
+	cntFace = 0;
 	cntEdge = 0;
 	cntVertex = 0;
 	cntFace_N = 0;
@@ -9,6 +10,8 @@ MeshSimplification::MeshSimplification(void){
 		edgeDeleted[i] = false;
 	for (int i = 0; i < MAX_VERTEX_CNT; i++)
 		vertexDeleted[i] = false;
+	for (int i = 0; i < MAX_FACE_CNT; i++)
+		faceDeleted[i] = false;
 	for (int i = 0; i < MAX_VERTEX_CNT; i++)
 		vertexTimes[i] = 0;
 }
@@ -45,14 +48,23 @@ void MeshSimplification::fileRead(std::string pathNameOBJ) {
 		}
 		else if (s == 'f') {
 			cntFace_N++;
+			cntFace++;
 			int v1, v2, v3;
 			infileOBJ >> v1 >> v2 >> v3;
-			if(v1==13||v2==13||v3==13)
-				std::cout << v1 << " " << v2 << " " << v3 << std::endl;
+
 			vertexTimes[v1] ++;
 			vertexTimes[v2] ++;
 			vertexTimes[v3] ++;
+
+			faceBuffer[cntFace].id = cntFace;
+			faceBuffer[cntFace].idVertex1 = v1;
+			faceBuffer[cntFace].idVertex2 = v2;
+			faceBuffer[cntFace].idVertex3 = v3;
 			
+			vertexBuffer[v1].faces.insert(cntFace);
+			vertexBuffer[v2].faces.insert(cntFace);
+			vertexBuffer[v3].faces.insert(cntFace);
+
 			vertexBuffer[v1].neighbor.insert(v2);
 			vertexBuffer[v1].neighbor.insert(v3);
 			vertexBuffer[v2].neighbor.insert(v3);
@@ -63,6 +75,17 @@ void MeshSimplification::fileRead(std::string pathNameOBJ) {
 		}
 	}
 	std::cout << "face read finished! cntFace:" << cntFace_N  << std::endl;
+	
+
+	//关闭文件
+	infileOBJ.close();
+}
+
+
+
+void MeshSimplification::edgeCollapse(int faceTarget) {
+	if(cntFace_T > faceTarget)
+		cntFace_T = faceTarget;
 	
 	for (int i = 1; i <= cntVertex; i++) {
 		std::set<int>::iterator it = vertexBuffer[i].neighbor.begin();
@@ -78,39 +101,21 @@ void MeshSimplification::fileRead(std::string pathNameOBJ) {
 
 	std::cout << "edge init finished! cntEdge:" << cntEdge << std::endl;
 
-	for (int i = 1; i < cntVertex; i++) {
-		if(vertexTimes[i]!=vertexBuffer[i].neighbor.size())
-			std::cout << i << " " << vertexTimes[i] << std::endl;
+	//for (; cntFace_N > cntFace_T; cntFace_N -= 2) {
+	while(cntFace_N>cntFace_T){
 
-		if (i == 13) {
-			std::cout << i << " " << vertexTimes[i] << " neighbor: " << std::endl;
-			for (std::set<int>::iterator it1 = vertexBuffer[i].neighbor.begin(); it1 != vertexBuffer[i].neighbor.end(); it1++) {
-				std::cout << (*it1) << ":" << vertexTimes[(*it1)] << " ";
-			}
-			std::cout << std::endl;
-		}
-	}
-	
-	//关闭文件
-	infileOBJ.close();
-}
-
-
-
-void MeshSimplification::edgeCollapse(int faceTarget) {
-	if(cntFace_T > faceTarget)
-		cntFace_T = faceTarget;
-	for (; cntFace_N > cntFace_T; cntFace_N -= 2) {
-		
 		if(cntFace_N % 1000 == 0 || cntFace_N % 1000 == 1)
 			std::cout << cntFace_N << std::endl;
 		//取出点
 		Edge edgeMIN = getEdgeWithMINDeltaValue();
-		//std::cout << cntFace_N << " " << edgeMIN.id << std::endl;
-		//Edge edgeMIN(1923,3641);
-		//calValueNVpos(edgeMIN);
 
-		/*std::cout << edgeMIN.deltaValue << " " << "->" << std::endl;
+
+		/* 调试代码
+		std::cout << cntFace_N << " " << edgeMIN.id << std::endl;
+		Edge edgeMIN(1923,3641);
+		calValueNVpos(edgeMIN);
+
+		std::cout << edgeMIN.deltaValue << " " << "->" << std::endl;
 		
 		Mat Q_sigma = calVertexQ(edgeMIN.v1) + calVertexQ(edgeMIN.v2);
 		for (int x = 0; x < 4; x++) {
@@ -138,6 +143,7 @@ void MeshSimplification::edgeCollapse(int faceTarget) {
 		deleteEdge(edgeMIN);
 		vertexDeleted[v1->id] = true;
 		vertexDeleted[v2->id] = true;
+
 		/*
 		for (std::set<int>::iterator it = v1->neighbor.begin(); it != v1->neighbor.end(); it++) {
 			std::cout << (*it) << " ";
@@ -146,7 +152,9 @@ void MeshSimplification::edgeCollapse(int faceTarget) {
 		for (std::set<int>::iterator it = v2->neighbor.begin(); it != v2->neighbor.end(); it++) {
 			std::cout << (*it) << " ";
 		}
-		std::cout << std::endl;*/
+		std::cout << std::endl;
+		*/
+
 		for (std::set<int>::iterator it = v1->neighbor.begin(); it != v1->neighbor.end(); it++) {
 			if ((*it) != v2->id) {
 				//删除与v1的所有边
@@ -170,11 +178,68 @@ void MeshSimplification::edgeCollapse(int faceTarget) {
 				vertexBuffer[(*it)].neighbor.insert(cntVertex);
 			}
 		}
+		
+
+		//std::cout << v1->id << " " << v2->id <<  "->>>" << vNew->id << std::endl;
+		//std::cout << std::endl;
+
+		std::vector<int> faceDeleting;
+
+		for (std::set<int>::iterator it = v1->faces.begin(); it != v1->faces.end(); it++) {
+			
+			Face* f = &(faceBuffer[(*it)]);
+			//std::cout << f->id << ": " << f->idVertex1 << " " << f->idVertex2 << " " << f->idVertex3 << std::endl;
+			if (f->idVertex1 == v1->id)
+				f->idVertex1 = vNew->id;
+			else if (f->idVertex2 == v1->id)
+				f->idVertex2 = vNew->id;
+			else if (f->idVertex3 == v1->id)
+				f->idVertex3 = vNew->id;
+			//std::cout << f->id << ": " << f->idVertex1 << " " << f->idVertex2 << " " << f->idVertex3 << std::endl;
+			vNew->faces.insert(f->id);
+		}
+		//std::cout << std::endl;
+
+		for (std::set<int>::iterator it = v2->faces.begin(); it != v2->faces.end(); it++) {
+			Face* f = &(faceBuffer[(*it)]);
+			//std::cout << f->id << ": " << f->idVertex1 << " " << f->idVertex2 << " " << f->idVertex3 << std::endl;
+			if (f->idVertex1 == v2->id)
+				f->idVertex1 = vNew->id;
+			else if (f->idVertex2 == v2->id)
+				f->idVertex2 = vNew->id;
+			else if (f->idVertex3 == v2->id)
+				f->idVertex3 = vNew->id;
+			//std::cout << f->id << ": " << f->idVertex1 << " " << f->idVertex2 << " " << f->idVertex3 << std::endl;
+			vNew->faces.insert(f->id);
+
+			//若一个面有两个顶点重合，则删除
+			if (f->idVertex1 == f->idVertex2) {
+				faceDeleting.push_back(f->id);
+				vertexBuffer[f->idVertex3].faces.erase(f->id);
+				//std::cout << "delete face iD: " << f->id << std::endl;
+			}
+			else if (f->idVertex2 == f->idVertex3) {
+				faceDeleting.push_back(f->id);
+				vertexBuffer[f->idVertex1].faces.erase(f->id);
+			}
+			else if (f->idVertex3 == f->idVertex1){
+				faceDeleting.push_back(f->id);
+				vertexBuffer[f->idVertex2].faces.erase(f->id);
+			}
+				
+		}
+
+		for (int i = 0; i < faceDeleting.size(); i++) {
+			vNew->faces.erase(faceDeleting[i]);
+			faceDeleted[faceDeleting[i]] = true;
+			cntFace_N--;
+		}
+
 		/*
 		for (std::set<int>::iterator it = vertexBuffer[cntVertex].neighbor.begin(); it != vertexBuffer[cntVertex].neighbor.end(); it++) {
 			std::cout << (*it) << " ";
 		}*/
-
+		//填入优先序列
 		for (std::set<int>::iterator it = vNew->neighbor.begin(); it != vNew->neighbor.end(); it++) {
 			Edge e((*it), cntVertex);
 			calValueNVpos(e);
@@ -322,37 +387,13 @@ void MeshSimplification::fileWrite(std::string pathNameOBJ) {
 		v->id = cntVertexTrue;
 		outfileOBJ << "v " << v->position.x << " " << v->position.y << " " << v->position.z << std::endl;
 	}
-	for (int i = 1; i <= cntVertex; i++) {//输出所有面
-		if (vertexDeleted[i])//如果第i个点已经删掉了，就略去
+	for (int i = 1; i <= cntFace; i++) {
+		if (faceDeleted[i])
 			continue;
-		Vertex* v = &(vertexBuffer[i]);//对于第i个点
-		for (std::set<int>::iterator it1 = v->neighbor.begin(); it1 != v->neighbor.end(); it1++) {
-			if (v->id >= (*it1))
-				continue;
-			for (std::set<int>::iterator it2 = v->neighbor.begin(); it2 != v->neighbor.end(); it2++) {
-				if ((*it1) < (*it2) && vertexBuffer[(*it1)].neighbor.count(*it2)) {
-					cntFaceTrue++;
-					vertexTimes[v->id] --;
-					vertexTimes[vertexBuffer[(*it1)].id] --;
-					vertexTimes[vertexBuffer[(*it2)].id] --;
-					if(v->id == 13)
-						std::cout << v->id << " " << vertexBuffer[(*it1)].id << " " << vertexBuffer[(*it2)].id << std::endl;
-					outfileOBJ << "f " << v->id << " " << vertexBuffer[(*it1)].id << " " << vertexBuffer[(*it2)].id << std::endl;
-				}
-			}
-		}
+		cntFaceTrue++;
+		Face* f = &(faceBuffer[i]);
+		outfileOBJ << "f " << vertexBuffer[f->idVertex1].id << " " << vertexBuffer[f->idVertex2].id << " " << vertexBuffer[f->idVertex3].id << std::endl;
 	}
-
-	for (int i = 1; i < cntVertex; i++) {
-		if (vertexTimes[i] != 0) {
-			std::cout << i << "neighbor: " << std::endl;
-			for (std::set<int>::iterator it1 = vertexBuffer[i].neighbor.begin(); it1 != vertexBuffer[i].neighbor.end(); it1++) {
-				std::cout << (*it1) << ":" <<vertexTimes[(*it1)] << " ";
-			}
-			std::cout << std::endl;
-		}
-	}
-
 
 	std::cout << "face: " << cntFaceTrue << std::endl;
 }

@@ -13,9 +13,9 @@ int main() {
 	string pathNameOBJ3 = "F:\\code\\DS\\MeshSimplification\\result\\data_basic2\\serapis_88040.obj_true.obj";
 
 	//string inFold = "F:\\code\\DS\\MeshSimplification\\data\\data_advanced1\\tortuga_152728.obj";
-	string inFold = "F:\\code\\DS\\MeshSimplification\\data\\data_basic1\\Utah_teapot_9438.obj";
+	string inFold = "F:\\code\\DS\\MeshSimplification\\data\\data_advanced1\\hand_654666.obj";
 	//string outFold = "F:\\code\\DS\\MeshSimplification\\result\\data_advanced1\\tortuga_152728.obj";
-	string outFold = "F:\\code\\DS\\MeshSimplification\\result\\data_basic1\\Utah_teapot_9438.obj";
+	string outFold = "F:\\code\\DS\\MeshSimplification\\result\\data_advanced1\\hand_654666.obj";
 
 
 

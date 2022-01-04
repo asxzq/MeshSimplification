@@ -10,6 +10,9 @@ public:
 	Vec3d position;
 	//相邻点
 	std::set<int> neighbor;
+	//所属面id
+	std::set<int> faces;
+	
 
 	//创建顶点
 	Vertex(void) :id(0), position(Vec3d(0, 0, 0)) {};

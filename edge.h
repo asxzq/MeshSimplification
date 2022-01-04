@@ -14,7 +14,7 @@ public:
 	int v1, v2;
 	//缩边后顶点
 	Vec3d vPos;
-	//缩边代价
+	//缩边代价,新点到原来两点所有所在面的距离
 	double deltaValue;
 
 	Edge(void);

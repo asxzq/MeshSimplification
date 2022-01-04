@@ -3,12 +3,14 @@
 #include"vertex.h"
 #include"edge.h"
 #include"mat.h"
+#include"face.h"
 #include<fstream>
 #include<string>
 #include<queue>
 #include<map>
 #define MAX_VERTEX_CNT 10000000
 #define MAX_EDGE_CNT 20000000
+#define MAX_FACE_CNT 20000000
 
 class MeshSimplification {
 	
@@ -45,6 +47,15 @@ class MeshSimplification {
 	bool edgeDeleted[MAX_EDGE_CNT + 1];
 	//边的索引图表----便于访问边的索引
 	std::map<std::pair<int, int>, int> edge2id;
+
+
+	//面相关变量
+	//面数
+	int cntFace;
+	//面集合
+	Face faceBuffer[MAX_FACE_CNT + 1];
+	//标记是否已被删除
+	bool faceDeleted[MAX_EDGE_CNT + 1];
 
 
 public:
