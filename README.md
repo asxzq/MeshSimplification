@@ -12,8 +12,8 @@
 
 654666个面
 
-![image-20220104134850619](F:\code\DS\MeshSimplification\code\MeshSimplification\image-20220104134850619.png)
+![image-20220104134850619](image-20220104134850619.png)
 
 缩减到10000个面
 
-![image-20220104133258184](F:\code\DS\MeshSimplification\code\MeshSimplification\image-20220104133258184.png)
+![image-20220104133258184](image-20220104133258184.png)
