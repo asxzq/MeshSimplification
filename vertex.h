@@ -2,6 +2,7 @@
 #include<iostream>
 #include<set>
 #include"vec.h"
+
 class Vertex {
 public:
 	//¶¥µãË÷Òý>=1

@@ -81,8 +81,6 @@ void MeshSimplification::fileRead(std::string pathNameOBJ) {
 	infileOBJ.close();
 }
 
-
-
 void MeshSimplification::edgeCollapse(int faceTarget) {
 	if(cntFace_T > faceTarget)
 		cntFace_T = faceTarget;
@@ -250,6 +248,113 @@ void MeshSimplification::edgeCollapse(int faceTarget) {
 
 
 
+
+void MeshSimplification::edgeCollapseSingle(int idVertex1, int idVertex2) {
+	
+	Edge edgeMIN(idVertex1, idVertex2);
+	calValueNVpos(edgeMIN);
+
+	Mat Q_sigma;
+
+	Vertex* v1 = &(vertexBuffer[idVertex1]);
+	Vertex* v2 = &(vertexBuffer[idVertex2]);
+
+	//在顶点集合中加入新点
+	cntVertex++;
+	Vertex* vNew = &(vertexBuffer[cntVertex]);
+	vNew->position = calVpos(edgeMIN, Q_sigma, 0);
+	vNew->id = cntVertex;
+
+	//删除edgeMIN和顶点
+	deleteEdge(edgeMIN);
+	vertexDeleted[v1->id] = true;
+	vertexDeleted[v2->id] = true;
+
+	for (std::set<int>::iterator it = v1->neighbor.begin(); it != v1->neighbor.end(); it++) {
+		if ((*it) != v2->id) {
+			//删除与v1的所有边
+			deleteEdge((*it), v1->id);
+			//解除邻接关系
+			vertexBuffer[(*it)].neighbor.erase(v1->id);
+			//添加邻接关系
+			vertexBuffer[cntVertex].neighbor.insert((*it));
+			vertexBuffer[(*it)].neighbor.insert(cntVertex);
+		}
+	}
+
+	for (std::set<int>::iterator it = v2->neighbor.begin(); it != v2->neighbor.end(); it++) {
+		if ((*it) != v1->id) {
+			//删除与v1的所有边
+			deleteEdge((*it), v2->id);
+			//解除邻接关系
+			vertexBuffer[(*it)].neighbor.erase(v2->id);
+			//添加邻接关系
+			vertexBuffer[cntVertex].neighbor.insert((*it));
+			vertexBuffer[(*it)].neighbor.insert(cntVertex);
+		}
+	}
+
+	std::vector<int> faceDeleting;
+
+	for (std::set<int>::iterator it = v1->faces.begin(); it != v1->faces.end(); it++) {
+
+		Face* f = &(faceBuffer[(*it)]);
+		//std::cout << f->id << ": " << f->idVertex1 << " " << f->idVertex2 << " " << f->idVertex3 << std::endl;
+		if (f->idVertex1 == v1->id)
+			f->idVertex1 = vNew->id;
+		else if (f->idVertex2 == v1->id)
+			f->idVertex2 = vNew->id;
+		else if (f->idVertex3 == v1->id)
+			f->idVertex3 = vNew->id;
+		//std::cout << f->id << ": " << f->idVertex1 << " " << f->idVertex2 << " " << f->idVertex3 << std::endl;
+		vNew->faces.insert(f->id);
+	}
+	//std::cout << std::endl;
+
+	for (std::set<int>::iterator it = v2->faces.begin(); it != v2->faces.end(); it++) {
+		Face* f = &(faceBuffer[(*it)]);
+		//std::cout << f->id << ": " << f->idVertex1 << " " << f->idVertex2 << " " << f->idVertex3 << std::endl;
+		if (f->idVertex1 == v2->id)
+			f->idVertex1 = vNew->id;
+		else if (f->idVertex2 == v2->id)
+			f->idVertex2 = vNew->id;
+		else if (f->idVertex3 == v2->id)
+			f->idVertex3 = vNew->id;
+		//std::cout << f->id << ": " << f->idVertex1 << " " << f->idVertex2 << " " << f->idVertex3 << std::endl;
+		vNew->faces.insert(f->id);
+
+		//若一个面有两个顶点重合，则删除
+		if (f->idVertex1 == f->idVertex2) {
+			faceDeleting.push_back(f->id);
+			vertexBuffer[f->idVertex3].faces.erase(f->id);
+			//std::cout << "delete face iD: " << f->id << std::endl;
+		}
+		else if (f->idVertex2 == f->idVertex3) {
+			faceDeleting.push_back(f->id);
+			vertexBuffer[f->idVertex1].faces.erase(f->id);
+		}
+		else if (f->idVertex3 == f->idVertex1) {
+			faceDeleting.push_back(f->id);
+			vertexBuffer[f->idVertex2].faces.erase(f->id);
+		}
+
+	}
+
+	for (int i = 0; i < faceDeleting.size(); i++) {
+		vNew->faces.erase(faceDeleting[i]);
+		faceDeleted[faceDeleting[i]] = true;
+		cntFace_N--;
+	}
+
+	for (std::set<int>::iterator it = vNew->neighbor.begin(); it != vNew->neighbor.end(); it++) {
+		Edge e((*it), cntVertex);
+		calValueNVpos(e);
+		addEdge(e);
+	}
+}
+
+
+
 Edge MeshSimplification::getEdgeWithMINDeltaValue() {
 	if (edges.size()<=0)
 		return Edge(0, 0);
@@ -327,9 +432,11 @@ Vec3d MeshSimplification::calVpos(Edge& e, Mat m, int flag) {
 }
 
 
-Mat MeshSimplification::calVertexQ(int idVertix) {
+Mat MeshSimplification::calVertexQ(int idVertex) {
 	Mat	Q;
-	Vertex* vtx = &(vertexBuffer[idVertix]);
+	
+	Vertex* vtx = &(vertexBuffer[idVertex]);
+	/*
 	std::set<int>::iterator it1 = vtx->neighbor.begin();
 	for (; it1 != vtx->neighbor.end(); it1++) {
 		for (std::set<int>::iterator it2 = it1; it2 != vtx->neighbor.end(); it2++) {
@@ -346,6 +453,19 @@ Mat MeshSimplification::calVertexQ(int idVertix) {
 						Q.mat[i][j] += plane.value[i] * plane.value[j];
 			}
 		}
+	}
+	*/
+	std::set<int>::iterator it2 = vtx->faces.begin();
+	for (; it2 != vtx->faces.end(); it2++) {
+		Face* face = &(faceBuffer[(*it2)]);
+		Vertex* v1 = &(vertexBuffer[face->idVertex1]);
+		Vertex* v2 = &(vertexBuffer[face->idVertex2]);
+		Vertex* v3 = &(vertexBuffer[face->idVertex3]);
+		Vec3d n = ((v1->position - v3->position).calCross(v2->position - v3->position)).calUnite();
+		Vec4d plane(n.x, n.y, n.z, -(v3->position.calDot(n)));
+		for (int i = 0; i < 4; i++)
+			for (int j = 0; j < 4; j++)
+				Q.mat[i][j] += plane.value[i] * plane.value[j];
 	}
 	return Q;
 }
@@ -394,7 +514,6 @@ void MeshSimplification::fileWrite(std::string pathNameOBJ) {
 		Face* f = &(faceBuffer[i]);
 		outfileOBJ << "f " << vertexBuffer[f->idVertex1].id << " " << vertexBuffer[f->idVertex2].id << " " << vertexBuffer[f->idVertex3].id << std::endl;
 	}
-
 	std::cout << "face: " << cntFaceTrue << std::endl;
 }
 

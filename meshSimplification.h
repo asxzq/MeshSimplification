@@ -66,6 +66,8 @@ public:
 	//¶ÁÈ¡OBJÎÄ¼þ
 	void fileRead(std::string pathNameOBJ);
 	void edgeCollapse(int faceTarget);
+	//basic1
+	void edgeCollapseSingle(int idVertex1, int idVertex2);
 	void fileWrite(std::string pathNameOBJ);
 
 
