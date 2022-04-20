@@ -18,5 +18,5 @@
 
 ![image-20220104133258184](image-20220104133258184.png)
 
-###参考
+### 参考
 https://github.com/lihy96/MeshSimplify
