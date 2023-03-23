@@ -8,7 +8,6 @@ int main() {
 
 	cout << "hello world" << endl;
 
-	string pathNameOBJ1 = "E:\Code\C++_VS\MashSimplification\MashSimplification";
 	string pathNameOBJ2 = "F:\\code\\DS\\MeshSimplification\\result\\data_basic2\\serapis_88040.obj";
 	string pathNameOBJ3 = "F:\\code\\DS\\MeshSimplification\\result\\data_basic2\\serapis_88040.obj_true.obj";
 
